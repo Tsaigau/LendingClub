@@ -1,2 +1,2 @@
 # LendingClub
-Analysis of Lending Club
+Analyze Lending Club
