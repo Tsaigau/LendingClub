@@ -1,0 +1,106 @@
+---
+title: "LendingClub Project"
+author: "KYH"
+date: "2019/6/12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+install.packages("tidyverse")
+install.packages("GGally")
+install.packages("mvtnorm")
+install.packages('DescTools')
+install.packages("data.table")
+install.packages("choroplethr")
+install.packages("choroplethrMaps")
+install.packages("ggmap")
+install.packages("e1071")
+library(tidyverse)
+library(ggplot2)
+library(GGally)
+library(DescTools)
+library(data.table)
+library(choroplethr)
+library(ggmap)
+```
+
+```{r}
+setwd("~/Desktop/lending-club-loan-data")
+loan<-fread("Accepted Data.csv")
+```
+
+```{r}
+multiplot<-function(...,plotlist=NULL,file,cols=1,layout=NULL){
+  library(grid)
+  plots<-c(list(...),plotlist)
+  numplots = length(plots)
+  if(is.null(layout)){
+    layout<-matrix(seq(1,cols*ceiling(numplots/cols)),
+                   ncol = cols,nrow = ceiling(numplots/cols))
+  }
+  if(numplots==1){
+    print(plots[1])
+  }else{
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout),ncol(layout))))
+    
+    for(i in 1:numplots){
+      matchidx <- as.data.frame(which(layout ==i ,arr.ind = TRUE))
+      
+      print(plots[[i]],vp= viewport(layout.pos.row = matchidx$row,
+                                    layout.pos.col = matchidx$col))
+    }
+  }
+}
+```
+
+
+```{r}
+Desc(loan$loan_amnt , plotit = T,main="loan_amount")
+```
+```{r}
+sloan<-loan%>%
+  select(grade,emp_length,int_rate,annual_inc,funded_amnt)
+clean_loan<-sloan[complete.cases(sloan)]
+```
+
+
+```{r}
+ggplot(clean_loan,aes(x=grade,y=int_rate))+geom_boxplot()+
+  labs(title="grade V.S int rate",y="int rate",x="grade")+
+  theme(plot.background = element_blank(),panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_rect(fill="white"),
+        axis.line = element_line(colour = "black"),axis.text = element_text(size=13),plot.title = element_text(size=15,hjust = 0.5),axis.title=element_text(size=15))
+
+```
+
+```{r}
+Desc(loan$purpose,plotit = T,main="purpose")
+```
+
+```{r}
+Desc(loan$loan_status,plotit = T,main="loan_status")
+```
+
+```{r}
+Loan<-loan %>% mutate(loan_outcome=ifelse(loan_status %in% c("Charged Off","Default"),"Charged Off",ifelse(loan_status == "Fully Paid","Fully Paid","No info")))
+
+loan %>% count(loan_status) %>% ggplot(aes(x = reorder(loan_status, desc(n)), y = n)) + geom_col()+ylab("quantity") + coord_flip()+labs(title="loan_status",x="")+
+  theme(plot.background = element_blank(),panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_rect(fill="white"),
+        axis.line = element_line(colour = "black"),axis.text = element_text(size=13),plot.title = element_text(size=15,hjust = 0.5),axis.title=element_text(size=15))
+
+
+```
+
+```{r}
+ggplot(Loan,aes(x=grade, fill=loan_outcome)) + geom_bar(position="dodge")
+
+```
+
